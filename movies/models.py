@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 # Create your models here.
 
 class Director(models.Model):
@@ -22,4 +24,17 @@ class Movie(models.Model):
 class Rating(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    star_choices = [(1,"*"),(2,"**"),(3,3),(4,4),(5,5)]
     stars = models.IntegerField()
+
+
+@receiver(post_save, sender=Rating)
+def updateMovieRating(sender, instance, **kwargs):
+    movie = instance.movie
+    sum = 0
+    count = 0
+    for rating in Rating.objects.all():
+        sum = sum + rating.stars
+        count = count + 1
+    movie.average_rate = sum/count
+    movie.save
